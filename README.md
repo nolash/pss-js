@@ -18,8 +18,10 @@ To use these examples you need two running go-ethereum pss node instances on the
 
 3. Create two data directories:
 
-   `<geth-binary> --datadir <path-to-datadir-A> account new`
-   `<geth-binary> --datadir <path-to-datadir-B> account new`
+   ```
+   <geth-binary> --datadir <path-to-datadir-A> account new
+   <geth-binary> --datadir <path-to-datadir-B> account new
+   ```
 
    you will have to enter passwords for these dirs. Enter something simple and DON'T use them for anything sensitive afterwards.
 
@@ -29,8 +31,10 @@ To use these examples you need two running go-ethereum pss node instances on the
 
 5. Start two swarm nodes proper, with pss:
 
-   `<swarm-binary> --datadir <path-to-datadir-A> --bzzaccount <bzzaccount-in-datadir> --ethapi '' --pss --ws --wsport 8546 --port 30399`
-   `<swarm-binary> --datadir <path-to-datadir-B> --bzzaccount <bzzaccount-in-datadir> --ethapi '' --pss --ws --wsport 8547 --port 30400`
+   ```
+   <swarm-binary> --datadir <path-to-datadir-A> --bzzaccount <bzzaccount-in-datadir> --ethapi '' --pss --ws --wsport 8546 --port 30399
+   <swarm-binary> --datadir <path-to-datadir-B> --bzzaccount <bzzaccount-in-datadir> --ethapi '' --pss --ws --wsport 8547 --port 30400
+   ```
 
 6. Connect one to the other;
 
