@@ -112,6 +112,7 @@ function script(step) {
 		// but it's nice for the success messsage afterwards
 		if (strikes > MAXSTRIKES) {
 			console.err("requred data missing, won't send");
+			shutdown();
 		}
 		if (subscribeid == "" || localaddr == "" | remoteaddr == "") {
 			console.err("still waiting for data before send");
