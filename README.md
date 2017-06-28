@@ -55,6 +55,7 @@ To use these examples you need two running go-ethereum pss node instances on the
 ## DEPENDENCIES
 
 * go-ethereum: https://github.com/ethersphere/go-ethereum/tree/network-testing-framework
+* ws: https://github.com/websockets/ws (node.js)
 * base64-js: https://github.com/beatgammit/base64-js (browser)
 
 ## LICENSE
