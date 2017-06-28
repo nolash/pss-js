@@ -35,9 +35,11 @@ To use these examples you need two running go-ethereum pss node instances on the
 6. Connect one to the other;
 
    a) retrieve the enode from A:
+
    `ENODE=geth --exec "admin.nodeInfo.enode" attach <path-to-datadir-A>/bzzd.ipc`
 
    b) use it to connect with B:
+
    `geth --exec "admin.addPeer($ENODE)" attach <path-to-datadir-B>/bzzd.ipc`
    
 7. Run the javascript
@@ -48,8 +50,8 @@ To use these examples you need two running go-ethereum pss node instances on the
 
 ## DEPENDENCIES
 
-go-ethereum: https://github.com/ethersphere/go-ethereum/tree/network-testing-framework
-base64-js: https://github.com/beatgammit/base64-js (browser)
+* go-ethereum: https://github.com/ethersphere/go-ethereum/tree/network-testing-framework
+* base64-js: https://github.com/beatgammit/base64-js (browser)
 
 ## LICENSE
 
