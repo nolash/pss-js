@@ -10,19 +10,14 @@
 
 .node {
 	padding-top: 5px;
-	border-top: 2px solid #000;
-	height: 25%;
+	border-top: solid #000;
+	height: 45%;
 	width: 60%;
 }
 
-.topic, .key {
-	height: 15%;
-	width: 60%;
-}
-
-.key {
-	padding-top: 5px;
-	border-top: 2px solid #000;
+.topic {
+	height: 10%;
+	widht: 60%;
 }
 
 .log {
@@ -31,7 +26,6 @@
 	float: right;
 	border-left: 2px dashed #000;
 	padding-left: 10px;
-	overflow: scroll;
 }
 	</style>
 	</head>
@@ -54,12 +48,10 @@ var cmd = {};
 var symkey = [];
 
 function addLog(elemid, str) {
-	var loglist = document.getElementById("log");
 	var logitem = document.createElement("p");
 	logitem.setAttribute("class", "logitem");
 	logitem.innerHTML = "[" + elemid + "]: " + str;
-	//document.getElementById("log").appendChild(logitem);
-	loglist.insertBefore(logitem, loglist.firstChild);
+	document.getElementById("log").appendChild(logitem);
 }
 
 function send(elemid, method, params) {
@@ -101,12 +93,12 @@ function addSymKey() {
 		a[i] = Math.floor(Math.random() * 255);
 	}
 	var topic = document.getElementById("pss_topic_send").value;
-	addLog("left", "sending pss_setSymmetricKey() key '" + toHexString(a) + "' topic '" + topic + "'"); 
+	addLog("left", "sending pss_setSymmetricKey() key '" + a + "' topic '" + topic + "'"); 
 	send("left", "pss_setSymmetricKey", '[[' + a + '], "' + topic + '", [' + addr["right"] + '], true]');
 	cmd["left"] = "symkey";
 
-	addLog("right", "sending pss_setSymmetricKey() key '" + toHexString(a) + "' topic '" + topic + "'"); 
-	send("right", "pss_setSymmetricKey", '[[' + a + '], "' + topic + '", [' + addr["left"] + '], true]');
+	addLog("right", "sending pss_setSymmetricKey() key '" + a + "' topic '" + topic + "'"); 
+	send("right", "pss_setSymmetricKey", '[[' + a + '], "' + topic + '", [' + addr["right"] + '], true]');
 	cmd["right"] = "symkey";
 
 	symkey.push({
@@ -140,14 +132,6 @@ function sendMsg(elemid, msg) {
 		addLog(elemid, "sending pss_sendSym() to symkey '" + toHexString(symkey[key]["key"].slice(0,4)) + "' topic '" + topic + "' using address hint '" + document.getElementById("pss_" + elemid + "_hint_addr").innerHTML + "'");
 		send(elemid, "pss_sendSym", '["' + symkey[key][elemid] + '","' + topic + '",[' + string2Bin(msg) + ']]');
 	}
-}
-
-function handshake(elemid) {
-	targetid = "left";
-	if (elemid == "left") {
-		targetid = "right";
-	}
-	send(elemid, "pss_handshake", '["0x' + toHexString(pubkey[targetid]) + '","' + topic + '",' + true + ',' + true + ']');
 }
 
 function recvNode(msg, senderid) {
@@ -197,18 +181,7 @@ function recvNode(msg, senderid) {
 			break;
 		default:
 			if (msg.method == "pss_subscription") {
-	 			var keytype = msg.params.result.Asymmetric ? "pubkey" : "symkey";
-	 			var key; 
-				if (keytype == "pubkey") {
-					key = msg.params.result.Key.substring(0, 18);
-				} else {
-					for (i = 0; i < symkey.length; i++) {
-						if (symkey[i][senderid] == msg.params.result.Key) {
-							key = toHexString(symkey[i]["key"].slice(0,8));
-						}
-					}
-				}
-	 			addLog(senderid, keytype + ":" + key + " <<< " + bin2String(base64js.toByteArray(msg.params.result.Msg)));
+	 			addLog(senderid, "<<< " + bin2String(base64js.toByteArray(msg.params.result.Msg)));
 			}
 	}
 
@@ -295,7 +268,12 @@ function bin2String(array) {
 			Send topic: <select id="pss_topic_send" disabled><option value="0">None</option></select>
 		</div>
 	</div>
-
+	<div class="symkey" id="symkey">
+		<div class="info"> <button id="pss_symkey_add" onClick="addSymKey();"</button> Add symkey</div>
+		<div class="action">
+			Send key: <select id="pss_key_send"><option value="pub">Public key</option></select>
+		</div>
+	</div>
 	<div class="node" id="left">
 		<div class="info"><button id="pss_left_addr_get" onClick="getAddr('left');">Addr</button> <span id="pss_left_addr_val"></span></div>
 		<div class="info"><button id="pss_left_pubkey_get" onClick="getPubKey('left');">Pubkey:</button> <span id="pss_left_pubkey_val"></span></div>
@@ -311,9 +289,6 @@ function bin2String(array) {
 		</div>
 		<div class="action">
 			<input type="text" id="pss_left" /> <button onClick="sendMsg('left', document.getElementById('pss_left').value);" id="pss_left_send">Send</button>
-		</div>
-		<div class="action">
-			<button onClick="handshake('left');" id="pss_handshake">Handshake</button>
 		</div>
 		
 	</div>
@@ -333,11 +308,5 @@ function bin2String(array) {
 		<div class="action">
 			<input type="text" id="pss_right" /> <button onClick="sendMsg('right', document.getElementById('pss_right').value);" id="pss_right_send">Send</button>
 		</div>
-	</div>
-	<div class="key" id="key">
-		<div class="info"> <button id="pss_symkey_add" onClick="addSymKey();"</button> Add symkey</div>
-		<div class="action">
-			Send key: <select id="pss_key_send"><option value="pub">Public key</option></select>
-	</div>
 	</body>
 </html>

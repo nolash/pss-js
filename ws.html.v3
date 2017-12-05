@@ -142,14 +142,6 @@ function sendMsg(elemid, msg) {
 	}
 }
 
-function handshake(elemid) {
-	targetid = "left";
-	if (elemid == "left") {
-		targetid = "right";
-	}
-	send(elemid, "pss_handshake", '["0x' + toHexString(pubkey[targetid]) + '","' + topic + '",' + true + ',' + true + ']');
-}
-
 function recvNode(msg, senderid) {
 
 	switch (cmd[senderid]) {
@@ -199,8 +191,8 @@ function recvNode(msg, senderid) {
 			if (msg.method == "pss_subscription") {
 	 			var keytype = msg.params.result.Asymmetric ? "pubkey" : "symkey";
 	 			var key; 
-				if (keytype == "pubkey") {
-					key = msg.params.result.Key.substring(0, 18);
+				if (keytype == pubkey) {
+					msg.params.result.Key.slice(0, 8);
 				} else {
 					for (i = 0; i < symkey.length; i++) {
 						if (symkey[i][senderid] == msg.params.result.Key) {
@@ -311,9 +303,6 @@ function bin2String(array) {
 		</div>
 		<div class="action">
 			<input type="text" id="pss_left" /> <button onClick="sendMsg('left', document.getElementById('pss_left').value);" id="pss_left_send">Send</button>
-		</div>
-		<div class="action">
-			<button onClick="handshake('left');" id="pss_handshake">Handshake</button>
 		</div>
 		
 	</div>
