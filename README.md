@@ -2,7 +2,7 @@
 
 pss is an upcoming remote messaging platform on the go-ethereum platform. It is currently being merged into go-ethereum master branch, but the cutting-edge version of the module can be experimented with on this branch:
 
-https://github.com/ethersphere/go-ethereum/tree/network-testing-framework
+https://github.com/ethersphere/go-ethereum/tree/swarm-network-rewrite
 
 ## USAGE
 
@@ -32,8 +32,8 @@ To use these examples you need two running go-ethereum pss node instances on the
 5. Start two swarm nodes proper, with pss:
 
    ```
-   <swarm-binary> --datadir <path-to-datadir-A> --bzzaccount <bzzaccount-in-datadir> --ethapi '' --pss --ws --wsport 8546 --port 30399
-   <swarm-binary> --datadir <path-to-datadir-B> --bzzaccount <bzzaccount-in-datadir> --ethapi '' --pss --ws --wsport 8547 --port 30400
+   <swarm-binary> --datadir <path-to-datadir-A> --bzzaccount <bzzaccount-in-datadir> --ens-api '' --pss --ws --wsport 8546 --port 30399
+   <swarm-binary> --datadir <path-to-datadir-B> --bzzaccount <bzzaccount-in-datadir> --ens-api '' --pss --ws --wsport 8547 --port 30400
    ```
 
 6. Connect one to the other;
@@ -55,8 +55,6 @@ To use these examples you need two running go-ethereum pss node instances on the
 ## DEPENDENCIES
 
 * go-ethereum: https://github.com/ethersphere/go-ethereum/tree/network-testing-framework
-* ws: https://github.com/websockets/ws (node.js)
-* base64-js: https://github.com/beatgammit/base64-js (browser)
 
 ## LICENSE
 

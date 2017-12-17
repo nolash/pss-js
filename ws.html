@@ -36,7 +36,6 @@
 	</style>
 	</head>
 	<body>
-	<script type="text/javascript" src="base64js.min.js"></script>
 	<script language="javascript">
 var faketopic = [1, 2, 3, 4];
 var seq;
@@ -89,10 +88,9 @@ function setHint(elemid, v) {
 	}
 
 	var topic = document.getElementById("pss_topic_send").value;
-	addLog(elemid, "sending pss_setPeerPublicKey() with pubkey " + toHexString(pubkey[targetid].slice(0, 8)) + " addr hint " + toHexString(addr[targetid].slice(0, v)));
-	send(elemid, "pss_setPeerPublicKey", '[[' + pubkey[targetid] + '],"' + topic + '",[' + addr[targetid].slice(0, v)  + ']]');	
+	addLog(elemid, "sending pss_setPeerPublicKey() with pubkey " + pubkey[targetid].substring(0, 18) + " addr hint " + addr[targetid].substring(0, 2+(2*v)));
+	send(elemid, "pss_setPeerPublicKey", '["' + pubkey[targetid] + '","' + topic + '","' + addr[targetid].substring(0, 2+(2*v))  + '"]');	
 	cmd[elemid] = "hint";
-	//conn[elemid].send('{"jsonrpc":"2.0","id":' + eval(seq + add) + ',"method":"pss_setPeerPublicKey","params":[[' + pubkey[targetid] + '],"0x' + toHexString(faketopic) + '",[' + addr[targetid].slice(0, v)  + ']]}');
 }
 
 function addSymKey() {
@@ -133,9 +131,10 @@ function sendMsg(elemid, msg) {
 	}
 	var topic = document.getElementById("pss_topic_send").value;
 	var key = document.getElementById("pss_key_send").value;
+	var hexmsg = toHexString(string2Bin(msg))
 	if (key == "pub") {
-		addLog(elemid, "sending pss_sendAsym() to pubkey '" + toHexString(pubkey[targetid].slice(0,4)) + "' topic '" + topic + "' using address hint '" + document.getElementById("pss_" + elemid + "_hint_addr").innerHTML + "'");
-		send(elemid, "pss_sendAsym", '["0x' + toHexString(pubkey[targetid]) + '","' + topic + '",[' + string2Bin(msg) + ']]');
+		addLog(elemid, "sending pss_sendAsym() msg '0x" + hexmsg + "' to pubkey '" + pubkey[targetid].substring(0,18) + "' topic '" + topic + "' using address hint '" + document.getElementById("pss_" + elemid + "_hint_addr").innerHTML + "'");
+		send(elemid, "pss_sendAsym", '["' + pubkey[targetid] + '","' + topic + '","0x' + hexmsg + '"]');
 	} else {
 		addLog(elemid, "sending pss_sendSym() to symkey '" + toHexString(symkey[key]["key"].slice(0,4)) + "' topic '" + topic + "' using address hint '" + document.getElementById("pss_" + elemid + "_hint_addr").innerHTML + "'");
 		send(elemid, "pss_sendSym", '["' + symkey[key][elemid] + '","' + topic + '",[' + string2Bin(msg) + ']]');
@@ -143,24 +142,28 @@ function sendMsg(elemid, msg) {
 }
 
 function handshake(elemid) {
+	var topic = document.getElementById("pss_topic_send").value;
 	targetid = "left";
 	if (elemid == "left") {
 		targetid = "right";
 	}
-	send(elemid, "pss_handshake", '["0x' + toHexString(pubkey[targetid]) + '","' + topic + '",' + true + ',' + true + ']');
+	addLog(elemid, "sending handshake to pubkey'" + pubkey[targetid].substring(0,18) + "'");
+	 send("left", "pss_addHandshake", '["' + topic + '"]');
+	 send("right", "pss_addHandshake", '["' + topic + '"]');
+	send(elemid, "pss_handshake", '["' + pubkey[targetid] + '","' + topic + '",' + true + ',' + true + ']');
 }
 
 function recvNode(msg, senderid) {
 
 	switch (cmd[senderid]) {
 		case "addr":
-			addr[senderid] = base64js.toByteArray(msg.result);
-			document.getElementById("pss_" + senderid + "_addr_val").innerHTML = toHexString(addr[senderid]);
+			addr[senderid] = msg.result;
+			document.getElementById("pss_" + senderid + "_addr_val").innerHTML = addr[senderid].substring(0,66);
 			break;
-//
+
 		case "pubkey":
-			pubkey[senderid] = base64js.toByteArray(msg.result);
-			document.getElementById("pss_" + senderid + "_pubkey_val").innerHTML = toHexString(pubkey[senderid].slice(0,32)) + "...";
+			pubkey[senderid] = msg.result;
+			document.getElementById("pss_" + senderid + "_pubkey_val").innerHTML = pubkey[senderid] + "...";
 			break;
 		case "topic":
 			addLog("left", "sending pss_Subscribe 'receive' with topic hex '" + msg.result + "'");
@@ -193,7 +196,7 @@ function recvNode(msg, senderid) {
 		case "subscribe":
 			break;
 		case "hint":
-			document.getElementById("pss_" + senderid + "_hint_addr").innerHTML = toHexString(addr[senderid].slice(0, document.getElementById("pss_" + senderid + "_hint").value));
+			document.getElementById("pss_" + senderid + "_hint_addr").innerHTML = addr[senderid].substring(0, 2+(2*document.getElementById("pss_" + senderid + "_hint").value));
 			break;
 		default:
 			if (msg.method == "pss_subscription") {
@@ -208,7 +211,7 @@ function recvNode(msg, senderid) {
 						}
 					}
 				}
-	 			addLog(senderid, keytype + ":" + key + " <<< " + bin2String(base64js.toByteArray(msg.params.result.Msg)));
+				addLog(senderid, keytype + ":" + key + " <<< " + msg.params.result.Msg);
 			}
 	}
 
@@ -281,9 +284,6 @@ function string2Bin(str) {
   return result;
 }
 
-function bin2String(array) {
-  return String.fromCharCode.apply(String, array);
-}
 
 	</script>
 
