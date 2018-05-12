@@ -89,7 +89,7 @@ function setHint(elemid, v) {
 
 	var topic = document.getElementById("pss_topic_send").value;
 	addLog(elemid, "sending pss_setPeerPublicKey() with pubkey " + pubkey[targetid].substring(0, 18) + " addr hint " + addr[targetid].substring(0, 2+(2*v)));
-	send(elemid, "pss_setPeerPublicKey", '["' + pubkey[targetid] + '","' + topic + '","' + addr[targetid].substring(0, 2+(2*v))  + '"]');	
+	send(elemid, "pss_setPeerPublicKey", '["' + pubkey[targetid] + '","' + topic + '","' + addr[targetid].substring(0, 2+(2*v))  + '"]');
 	cmd[elemid] = "hint";
 }
 
@@ -99,11 +99,11 @@ function addSymKey() {
 		a[i] = Math.floor(Math.random() * 255);
 	}
 	var topic = document.getElementById("pss_topic_send").value;
-	addLog("left", "sending pss_setSymmetricKey() key '" + toHexString(a) + "' topic '" + topic + "'"); 
+	addLog("left", "sending pss_setSymmetricKey() key '" + toHexString(a) + "' topic '" + topic + "'");
 	send("left", "pss_setSymmetricKey", '[[' + a + '], "' + topic + '", [' + addr["right"] + '], true]');
 	cmd["left"] = "symkey";
 
-	addLog("right", "sending pss_setSymmetricKey() key '" + toHexString(a) + "' topic '" + topic + "'"); 
+	addLog("right", "sending pss_setSymmetricKey() key '" + toHexString(a) + "' topic '" + topic + "'");
 	send("right", "pss_setSymmetricKey", '[[' + a + '], "' + topic + '", [' + addr["left"] + '], true]');
 	cmd["right"] = "symkey";
 
@@ -201,7 +201,7 @@ function recvNode(msg, senderid) {
 		default:
 			if (msg.method == "pss_subscription") {
 	 			var keytype = msg.params.result.Asymmetric ? "pubkey" : "symkey";
-	 			var key; 
+	 			var key;
 				if (keytype == "pubkey") {
 					key = msg.params.result.Key.substring(0, 18);
 				} else {
@@ -225,30 +225,30 @@ function recvNode(msg, senderid) {
 
 if ('WebSocket' in window) {
 
-	// "local" and "remote" are just names, they're both as local and remote as the other :)
+	// "left" and "remote" are just names, they're both as left and remote as the other :)
 	conn["left"] = new WebSocket("ws://localhost:8546");
 	conn["right"] = new WebSocket("ws://localhost:8547");
 
-	// local only does step 0 of the script
+	// left only does step 0 of the script
 	conn["left"].onopen = function() {
-		console.log("local ws open");
+		console.log("left ws open");
 	}
 
 	conn["right"].onopen = function() {
-		console.log("local ws open");
+		console.log("right ws open");
 	}
 
-	// local receives messages
+	// left receives messages
 	conn["left"].onmessage = function(m) {
 		msg = JSON.parse(m.data);
 		console.log("left msg: " + m.data);
-		recvNode(msg, "left");	
+		recvNode(msg, "left");
 	}
 
 	conn["right"].onmessage = function(m) {
 		msg = JSON.parse(m.data);
 		console.log("right msg: " + m.data);
-		recvNode(msg, "right");	
+		recvNode(msg, "right");
 	}
 
 	conn["left"].onerror = connerror;
@@ -315,7 +315,7 @@ function string2Bin(str) {
 		<div class="action">
 			<button onClick="handshake('left');" id="pss_handshake">Handshake</button>
 		</div>
-		
+
 	</div>
 	<div class="node" id="right">
 		<div class="info"><button id="pss_right_addr_get" onClick="getAddr('right');">Addr</button> <span id="pss_right_addr_val"></span></div>
@@ -327,7 +327,7 @@ function string2Bin(str) {
 				<option>4</option>
 				<option>1</option>
 				<option>0</option>
-			</select> 
+			</select>
 			<span id="pss_right_hint_addr"></span>
 		</div>
 		<div class="action">
