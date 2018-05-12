@@ -62,18 +62,24 @@ function addLog(elemid, str) {
 }
 
 function send(elemid, method, params) {
-	conn[elemid].send('{"jsonrpc":"2.0","id":' + seq[elemid]++ + ',"method":"' + method + '","params":' + params + '}');
+	const json = {
+		jsonrpc: "2.0",
+		id: seq[elemid]++,
+		method: method,
+		params: params,
+	}
+	conn[elemid].send(JSON.stringify(json));
 }
 
 function getAddr(elemid) {
 	addLog(elemid, "sending pss_baseAddr()");
-	send(elemid, "pss_baseAddr", "null");
+	send(elemid, "pss_baseAddr");
 	cmd[elemid] = "addr";
 }
 
 function getPubKey(elemid) {
 	addLog(elemid, "sending pss_getPublicKey()");
-	send(elemid, "pss_getPublicKey", "null");
+	send(elemid, "pss_getPublicKey");
 	cmd[elemid] = "pubkey";
 }
 
@@ -89,7 +95,7 @@ function setHint(elemid, v) {
 
 	var topic = document.getElementById("pss_topic_send").value;
 	addLog(elemid, "sending pss_setPeerPublicKey() with pubkey " + pubkey[targetid].substring(0, 18) + " addr hint " + addr[targetid].substring(0, 2+(2*v)));
-	send(elemid, "pss_setPeerPublicKey", '["' + pubkey[targetid] + '","' + topic + '","' + addr[targetid].substring(0, 2+(2*v))  + '"]');
+	send(elemid, "pss_setPeerPublicKey", [ pubkey[targetid], topic, addr[targetid].substring(0, 2+(2*v))]);
 	cmd[elemid] = "hint";
 }
 
@@ -100,11 +106,11 @@ function addSymKey() {
 	}
 	var topic = document.getElementById("pss_topic_send").value;
 	addLog("left", "sending pss_setSymmetricKey() key '" + toHexString(a) + "' topic '" + topic + "'");
-	send("left", "pss_setSymmetricKey", '[[' + a + '], "' + topic + '", [' + addr["right"] + '], true]');
+	send("left", "pss_setSymmetricKey", [ a, topic, addr["right"], true ]);
 	cmd["left"] = "symkey";
 
 	addLog("right", "sending pss_setSymmetricKey() key '" + toHexString(a) + "' topic '" + topic + "'");
-	send("right", "pss_setSymmetricKey", '[[' + a + '], "' + topic + '", [' + addr["left"] + '], true]');
+	send("right", "pss_setSymmetricKey", [ a, topic, addr["left"], true ]);
 	cmd["right"] = "symkey";
 
 	symkey.push({
@@ -119,7 +125,7 @@ function subscribe(topic) {
 		return
 	}
 	addLog("left", "sending pss_stringToTopic() with string '" + topic + "'");
-	send("left", "pss_stringToTopic", '["' + topic.value + '"]');
+	send("left", "pss_stringToTopic", [topic]);
 	cmd["left"] = "topic";
 }
 
@@ -132,12 +138,12 @@ function sendMsg(elemid, msg) {
 	var topic = document.getElementById("pss_topic_send").value;
 	var key = document.getElementById("pss_key_send").value;
 	var hexmsg = toHexString(string2Bin(msg))
-	if (key == "pub") {
+	if (key === "pub") {
 		addLog(elemid, "sending pss_sendAsym() msg '0x" + hexmsg + "' to pubkey '" + pubkey[targetid].substring(0,18) + "' topic '" + topic + "' using address hint '" + document.getElementById("pss_" + elemid + "_hint_addr").innerHTML + "'");
-		send(elemid, "pss_sendAsym", '["' + pubkey[targetid] + '","' + topic + '","0x' + hexmsg + '"]');
+		send(elemid, "pss_sendAsym", [ pubkey[targetid], topic, "0x" + hexmsg ]);
 	} else {
 		addLog(elemid, "sending pss_sendSym() to symkey '" + toHexString(symkey[key]["key"].slice(0,4)) + "' topic '" + topic + "' using address hint '" + document.getElementById("pss_" + elemid + "_hint_addr").innerHTML + "'");
-		send(elemid, "pss_sendSym", '["' + symkey[key][elemid] + '","' + topic + '",[' + string2Bin(msg) + ']]');
+		send(elemid, "pss_sendSym", [ symkey[key][elemid], topic, [ string2Bin(msg) ] ]);
 	}
 }
 
@@ -148,9 +154,9 @@ function handshake(elemid) {
 		targetid = "right";
 	}
 	addLog(elemid, "sending handshake to pubkey'" + pubkey[targetid].substring(0,18) + "'");
-	 send("left", "pss_addHandshake", '["' + topic + '"]');
-	 send("right", "pss_addHandshake", '["' + topic + '"]');
-	send(elemid, "pss_handshake", '["' + pubkey[targetid] + '","' + topic + '",' + true + ',' + true + ']');
+	send("left", "pss_addHandshake", [topic]);
+	send("right", "pss_addHandshake", [topic]);
+	send(elemid, "pss_handshake", [ pubkey[targetid], topic, true, true ]);
 }
 
 function recvNode(msg, senderid) {
@@ -168,8 +174,8 @@ function recvNode(msg, senderid) {
 		case "topic":
 			addLog("left", "sending pss_Subscribe 'receive' with topic hex '" + msg.result + "'");
 			addLog("right", "sending pss_Subscribe 'receive' with topic hex '" + msg.result + "'");
-			send("left", "pss_subscribe", '["receive","' + msg.result + '"]');
-			send("right", "pss_subscribe", '["receive","' + msg.result + '"]');
+			send("left", "pss_subscribe", [ "receive", msg.result ]);
+			send("right", "pss_subscribe", [ "receive", msg.result ]);
 			cmd["left"] = "subscribe";
 			cmd["right"] = "subscribe";
 			var sel = document.getElementById("pss_topic_send");
@@ -226,8 +232,8 @@ function recvNode(msg, senderid) {
 if ('WebSocket' in window) {
 
 	// "left" and "remote" are just names, they're both as left and remote as the other :)
-	conn["left"] = new WebSocket("ws://localhost:8546");
-	conn["right"] = new WebSocket("ws://localhost:8547");
+	conn["left"] = new WebSocket("ws://localhost:8601");
+	conn["right"] = new WebSocket("ws://localhost:8602");
 
 	// left only does step 0 of the script
 	conn["left"].onopen = function() {
