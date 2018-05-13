@@ -8,6 +8,15 @@ https://github.com/ethersphere/go-ethereum/tree/swarm-network-rewrite
 
 To use these examples you need two running go-ethereum pss node instances on the ports given in the scripts.
 
+### Docker method
+
+This is the easiest method, you can use the swarm test cluster, follow the instructions here:
+
+https://github.com/janos/swarm-test-cluster/tree/master/swarm-test-cluster
+
+
+### Manual method
+
 1. Compile geth:
 
    `go build -v -o <desired-path-to-geth-binary> $GOPATH/src/github.com/ethereum/go-ethereum/cmd/geth`
@@ -32,8 +41,8 @@ To use these examples you need two running go-ethereum pss node instances on the
 5. Start two swarm nodes proper, with pss:
 
    ```
-   <swarm-binary> --datadir <path-to-datadir-A> --bzzaccount <bzzaccount-in-datadir> --ens-api '' --pss --ws --wsport 8546 --port 30399
-   <swarm-binary> --datadir <path-to-datadir-B> --bzzaccount <bzzaccount-in-datadir> --ens-api '' --pss --ws --wsport 8547 --port 30400
+   <swarm-binary> --datadir <path-to-datadir-A> --bzzaccount <bzzaccount-in-datadir> --ens-api '' --pss --ws --wsport 8601 --port 30399
+   <swarm-binary> --datadir <path-to-datadir-B> --bzzaccount <bzzaccount-in-datadir> --ens-api '' --pss --ws --wsport 8602 --port 30400
    ```
 
 6. Connect one to the other;
