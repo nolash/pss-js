@@ -89,8 +89,8 @@ function setHint(elemid, v) {
 		targetid = "right";
 	}
 	var sel = document.getElementById("pss_" + elemid + "_hint");
-	if (sel.options[0].value == "Set") {
-		sel.remove(0);
+	if (isNaN(sel.options[0].value)) {
+		return;
 	}
 
 	var topic = document.getElementById("pss_topic_send").value;
@@ -330,7 +330,6 @@ function hexDecode(str) {
 		<div class="info">Address hint:
 			<select onChange="setHint('left', this.value);" id="pss_left_hint" disabled>
 				<option disabled selected value>Select</option>
-				<option>Set</option>
 				<option>32</option>
 				<option>4</option>
 				<option>1</option>
@@ -355,7 +354,6 @@ function hexDecode(str) {
 		<div class="info">Address hint:
 			<select onChange="setHint('right', this.value);" id="pss_right_hint" disabled>
 				<option disabled selected value>Select</option>
-				<option>Set</option>
 				<option>32</option>
 				<option>4</option>
 				<option>1</option>
