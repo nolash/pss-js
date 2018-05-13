@@ -105,11 +105,11 @@ function addSymKey() {
 		symmetricKey[i] = Math.floor(Math.random() * 255);
 	}
 	var topic = document.getElementById("pss_topic_send").value;
-	addLog("left", "sending pss_setSymmetricKey() key '" + toHexString(symmetricKey) + "' topic '" + topic + "'");
+	addLog("left", "sending pss_setSymmetricKey() key '" + byteArray2HexString(symmetricKey) + "' topic '" + topic + "'");
 	send("left", "pss_setSymmetricKey", [ symmetricKey, topic, addr["right"], true ]);
 	cmd["left"] = "symkey";
 
-	addLog("right", "sending pss_setSymmetricKey() key '" + toHexString(symmetricKey) + "' topic '" + topic + "'");
+	addLog("right", "sending pss_setSymmetricKey() key '" + byteArray2HexString(symmetricKey) + "' topic '" + topic + "'");
 	send("right", "pss_setSymmetricKey", [ symmetricKey, topic, addr["left"], true ]);
 	cmd["right"] = "symkey";
 
@@ -137,13 +137,13 @@ function sendMsg(elemid, msg) {
 	}
 	var topic = document.getElementById("pss_topic_send").value;
 	var key = document.getElementById("pss_key_send").value;
-	var hexmsg = toHexString(string2Bin(msg))
+	var hexmsg = byteArray2HexString(string2ByteArray(msg))
 	if (key === "pub") {
 		addLog(elemid, "sending pss_sendAsym() msg '0x" + hexmsg + "' to pubkey '" + pubkey[targetid].substring(0,18) + "' topic '" + topic + "' using address hint '" + document.getElementById("pss_" + elemid + "_hint_addr").innerHTML + "'");
 		send(elemid, "pss_sendAsym", [ pubkey[targetid], topic, "0x" + hexmsg ]);
 	} else {
-		addLog(elemid, "sending pss_sendSym() to symkey '" + toHexString(symkey[key]["key"].slice(0,4)) + "' topic '" + topic + "' using address hint '" + document.getElementById("pss_" + elemid + "_hint_addr").innerHTML + "'");
-		send(elemid, "pss_sendSym", [ symkey[key][elemid], topic, [ string2Bin(msg) ] ]);
+		addLog(elemid, "sending pss_sendSym() to symkey '" + byteArray2HexString(symkey[key]["key"].slice(0,4)) + "' topic '" + topic + "' using address hint '" + document.getElementById("pss_" + elemid + "_hint_addr").innerHTML + "'");
+		send(elemid, "pss_sendSym", [ symkey[key][elemid], topic, [ string2ByteArray(msg) ] ]);
 	}
 }
 
@@ -194,7 +194,7 @@ function recvNode(msg, senderid) {
 			var lastsymkey = symkey[symkey.length-1];
 			if (lastsymkey["left"] == "" && lastsymkey["right"] == "") {
 				opt.value = symkey.length-1;
-				opt.text = toHexString(lastsymkey["key"].slice(0, 16));
+				opt.text = byteArray2HexString(lastsymkey["key"].slice(0, 16));
 				sendsel.appendChild(opt);
 			}
 			lastsymkey[senderid] = msg.result;
@@ -213,7 +213,7 @@ function recvNode(msg, senderid) {
 				} else {
 					for (i = 0; i < symkey.length; i++) {
 						if (symkey[i][senderid] == msg.params.result.Key) {
-							key = toHexString(symkey[i]["key"].slice(0,8));
+							key = byteArray2HexString(symkey[i]["key"].slice(0,8));
 						}
 					}
 				}
@@ -275,21 +275,20 @@ function script(step) {
 }
 
 // cheekily borrowed from https://stackoverflow.com/questions/34309988/byte-array-to-hex-string-conversion-in-javascript
-function toHexString(byteArray) {
+function byteArray2HexString(byteArray) {
   return Array.from(byteArray, function(byte) {
     return ('0' + (byte & 0xFF).toString(16)).slice(-2);
   }).join('');
 }
 
 // equally cheekily borrowed from https://stackoverflow.com/questions/17720394/javascript-string-to-byte-to-string
-function string2Bin(str) {
+function string2ByteArray(str) {
   var result = [];
   for (var i = 0; i < str.length; i++) {
     result.push(str.charCodeAt(i));
   }
   return result;
 }
-
 
 	</script>
 
