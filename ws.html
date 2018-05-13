@@ -95,26 +95,26 @@ function setHint(elemid, v) {
 
 	var topic = document.getElementById("pss_topic_send").value;
 	addLog(elemid, "sending pss_setPeerPublicKey() with pubkey " + pubkey[targetid].substring(0, 18) + " addr hint " + addr[targetid].substring(0, 2+(2*v)));
-	send(elemid, "pss_setPeerPublicKey", [ pubkey[targetid], topic, addr[targetid].substring(0, 2+(2*v))]);
+	send(elemid, "pss_setPeerPublicKey", [ pubkey[targetid], topic, addr[targetid].substring(0, 2 + (2 * v))]);
 	cmd[elemid] = "hint";
 }
 
 function addSymKey() {
-	var a = new Uint8Array(32);
+	var symmetricKey = new Uint8Array(32);
 	for (i = 0; i < 32; i++) {
-		a[i] = Math.floor(Math.random() * 255);
+		symmetricKey[i] = Math.floor(Math.random() * 255);
 	}
 	var topic = document.getElementById("pss_topic_send").value;
-	addLog("left", "sending pss_setSymmetricKey() key '" + toHexString(a) + "' topic '" + topic + "'");
-	send("left", "pss_setSymmetricKey", [ a, topic, addr["right"], true ]);
+	addLog("left", "sending pss_setSymmetricKey() key '" + toHexString(symmetricKey) + "' topic '" + topic + "'");
+	send("left", "pss_setSymmetricKey", [ symmetricKey, topic, addr["right"], true ]);
 	cmd["left"] = "symkey";
 
-	addLog("right", "sending pss_setSymmetricKey() key '" + toHexString(a) + "' topic '" + topic + "'");
-	send("right", "pss_setSymmetricKey", [ a, topic, addr["left"], true ]);
+	addLog("right", "sending pss_setSymmetricKey() key '" + toHexString(symmetricKey) + "' topic '" + topic + "'");
+	send("right", "pss_setSymmetricKey", [ symmetricKey, topic, addr["left"], true ]);
 	cmd["right"] = "symkey";
 
 	symkey.push({
-		"key": a,
+		"key": symmetricKey,
 		"left": "",
 		"right": "",
 	});
@@ -305,9 +305,10 @@ function string2Bin(str) {
 	<div class="node" id="left">
 		<div class="info"><button id="pss_left_addr_get" onClick="getAddr('left');">Addr</button> <span id="pss_left_addr_val"></span></div>
 		<div class="info"><button id="pss_left_pubkey_get" onClick="getPubKey('left');">Pubkey:</button> <span id="pss_left_pubkey_val"></span></div>
-		<div class="info">Hint:
+		<div class="info">Address hint:
 			<select onChange="setHint('left', this.value);" id="pss_left_hint" disabled>
-				<option defaultselected>Set</option>
+				<option disabled selected value>Select</option>
+				<option>Set</option>
 				<option>32</option>
 				<option>4</option>
 				<option>1</option>
@@ -315,9 +316,12 @@ function string2Bin(str) {
 			</select>
 			<span id="pss_left_hint_addr"></span>
 		</div>
-		<div class="action">
-			<input type="text" id="pss_left" /> <button onClick="sendMsg('left', document.getElementById('pss_left').value);" id="pss_left_send">Send</button>
-		</div>
+		<span>
+			<div class="action">
+				<input type="text" id="pss_left" /> <button onClick="sendMsg('left', document.getElementById('pss_left').value);" id="pss_left_send">Send</button>
+			</div>
+		</span>
+
 		<div class="action">
 			<button onClick="handshake('left');" id="pss_handshake">Handshake</button>
 		</div>
@@ -326,9 +330,10 @@ function string2Bin(str) {
 	<div class="node" id="right">
 		<div class="info"><button id="pss_right_addr_get" onClick="getAddr('right');">Addr</button> <span id="pss_right_addr_val"></span></div>
 		<div class="info"><button id="pss_right_pubkey_get" onClick="getPubKey('right');">Pubkey:</button> <span id="pss_right_pubkey_val"></span></div>
-		<div class="info">Hint:
+		<div class="info">Address hint:
 			<select onChange="setHint('right', this.value);" id="pss_right_hint" disabled>
-				<option defaultselected>Set</option>
+				<option disabled selected value>Select</option>
+				<option>Set</option>
 				<option>32</option>
 				<option>4</option>
 				<option>1</option>
