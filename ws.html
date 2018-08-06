@@ -62,18 +62,24 @@ function addLog(elemid, str) {
 }
 
 function send(elemid, method, params) {
-	conn[elemid].send('{"jsonrpc":"2.0","id":' + seq[elemid]++ + ',"method":"' + method + '","params":' + params + '}');
+	const json = {
+		jsonrpc: "2.0",
+		id: seq[elemid]++,
+		method: method,
+		params: params,
+	}
+	conn[elemid].send(JSON.stringify(json));
 }
 
 function getAddr(elemid) {
 	addLog(elemid, "sending pss_baseAddr()");
-	send(elemid, "pss_baseAddr", "null");
+	send(elemid, "pss_baseAddr");
 	cmd[elemid] = "addr";
 }
 
 function getPubKey(elemid) {
 	addLog(elemid, "sending pss_getPublicKey()");
-	send(elemid, "pss_getPublicKey", "null");
+	send(elemid, "pss_getPublicKey");
 	cmd[elemid] = "pubkey";
 }
 
@@ -83,32 +89,32 @@ function setHint(elemid, v) {
 		targetid = "right";
 	}
 	var sel = document.getElementById("pss_" + elemid + "_hint");
-	if (sel.options[0].value == "Set") {
-		sel.remove(0);
+	if (isNaN(sel.options[0].value)) {
+		return;
 	}
 
 	var topic = document.getElementById("pss_topic_send").value;
 	addLog(elemid, "sending pss_setPeerPublicKey() with pubkey " + pubkey[targetid].substring(0, 18) + " addr hint " + addr[targetid].substring(0, 2+(2*v)));
-	send(elemid, "pss_setPeerPublicKey", '["' + pubkey[targetid] + '","' + topic + '","' + addr[targetid].substring(0, 2+(2*v))  + '"]');	
+	send(elemid, "pss_setPeerPublicKey", [ pubkey[targetid], topic, addr[targetid].substring(0, 2 + (2 * v))]);
 	cmd[elemid] = "hint";
 }
 
 function addSymKey() {
-	var a = new Uint8Array(32);
+	var symmetricKey = new Uint8Array(32);
 	for (i = 0; i < 32; i++) {
-		a[i] = Math.floor(Math.random() * 255);
+		symmetricKey[i] = Math.floor(Math.random() * 255);
 	}
 	var topic = document.getElementById("pss_topic_send").value;
-	addLog("left", "sending pss_setSymmetricKey() key '" + toHexString(a) + "' topic '" + topic + "'"); 
-	send("left", "pss_setSymmetricKey", '[[' + a + '], "' + topic + '", [' + addr["right"] + '], true]');
+	addLog("left", "sending pss_setSymmetricKey() key '" + byteArray2HexString(symmetricKey) + "' topic '" + topic + "'");
+	send("left", "pss_setSymmetricKey", [ symmetricKey, topic, addr["right"], true ]);
 	cmd["left"] = "symkey";
 
-	addLog("right", "sending pss_setSymmetricKey() key '" + toHexString(a) + "' topic '" + topic + "'"); 
-	send("right", "pss_setSymmetricKey", '[[' + a + '], "' + topic + '", [' + addr["left"] + '], true]');
+	addLog("right", "sending pss_setSymmetricKey() key '" + byteArray2HexString(symmetricKey) + "' topic '" + topic + "'");
+	send("right", "pss_setSymmetricKey", [ symmetricKey, topic, addr["left"], true ]);
 	cmd["right"] = "symkey";
 
 	symkey.push({
-		"key": a,
+		"key": symmetricKey,
 		"left": "",
 		"right": "",
 	});
@@ -119,7 +125,7 @@ function subscribe(topic) {
 		return
 	}
 	addLog("left", "sending pss_stringToTopic() with string '" + topic + "'");
-	send("left", "pss_stringToTopic", '["' + topic.value + '"]');
+	send("left", "pss_stringToTopic", [topic]);
 	cmd["left"] = "topic";
 }
 
@@ -131,13 +137,13 @@ function sendMsg(elemid, msg) {
 	}
 	var topic = document.getElementById("pss_topic_send").value;
 	var key = document.getElementById("pss_key_send").value;
-	var hexmsg = toHexString(string2Bin(msg))
-	if (key == "pub") {
-		addLog(elemid, "sending pss_sendAsym() msg '0x" + hexmsg + "' to pubkey '" + pubkey[targetid].substring(0,18) + "' topic '" + topic + "' using address hint '" + document.getElementById("pss_" + elemid + "_hint_addr").innerHTML + "'");
-		send(elemid, "pss_sendAsym", '["' + pubkey[targetid] + '","' + topic + '","0x' + hexmsg + '"]');
+	var hexmsg = hexEncode(msg);
+	if (key === "pub") {
+		addLog(elemid, "sending pss_sendAsym() msg " + hexmsg + "' to pubkey '" + pubkey[targetid].substring(0,18) + "' topic '" + topic + "' using address hint '" + document.getElementById("pss_" + elemid + "_hint_addr").innerHTML + "'");
+		send(elemid, "pss_sendAsym", [ pubkey[targetid], topic,  hexmsg ]);
 	} else {
-		addLog(elemid, "sending pss_sendSym() to symkey '" + toHexString(symkey[key]["key"].slice(0,4)) + "' topic '" + topic + "' using address hint '" + document.getElementById("pss_" + elemid + "_hint_addr").innerHTML + "'");
-		send(elemid, "pss_sendSym", '["' + symkey[key][elemid] + '","' + topic + '",[' + string2Bin(msg) + ']]');
+		addLog(elemid, "sending pss_sendSym() to symkey '" + byteArray2HexString(symkey[key]["key"].slice(0,4)) + "' topic '" + topic + "' using address hint '" + document.getElementById("pss_" + elemid + "_hint_addr").innerHTML + "'");
+		send(elemid, "pss_sendSym", [ symkey[key][elemid], topic, [ string2ByteArray(msg) ] ]);
 	}
 }
 
@@ -148,9 +154,9 @@ function handshake(elemid) {
 		targetid = "right";
 	}
 	addLog(elemid, "sending handshake to pubkey'" + pubkey[targetid].substring(0,18) + "'");
-	 send("left", "pss_addHandshake", '["' + topic + '"]');
-	 send("right", "pss_addHandshake", '["' + topic + '"]');
-	send(elemid, "pss_handshake", '["' + pubkey[targetid] + '","' + topic + '",' + true + ',' + true + ']');
+	send("left", "pss_addHandshake", [topic]);
+	send("right", "pss_addHandshake", [topic]);
+	send(elemid, "pss_handshake", [ pubkey[targetid], topic, true, true ]);
 }
 
 function recvNode(msg, senderid) {
@@ -168,8 +174,8 @@ function recvNode(msg, senderid) {
 		case "topic":
 			addLog("left", "sending pss_Subscribe 'receive' with topic hex '" + msg.result + "'");
 			addLog("right", "sending pss_Subscribe 'receive' with topic hex '" + msg.result + "'");
-			send("left", "pss_subscribe", '["receive","' + msg.result + '"]');
-			send("right", "pss_subscribe", '["receive","' + msg.result + '"]');
+			send("left", "pss_subscribe", [ "receive", msg.result ]);
+			send("right", "pss_subscribe", [ "receive", msg.result ]);
 			cmd["left"] = "subscribe";
 			cmd["right"] = "subscribe";
 			var sel = document.getElementById("pss_topic_send");
@@ -188,7 +194,7 @@ function recvNode(msg, senderid) {
 			var lastsymkey = symkey[symkey.length-1];
 			if (lastsymkey["left"] == "" && lastsymkey["right"] == "") {
 				opt.value = symkey.length-1;
-				opt.text = toHexString(lastsymkey["key"].slice(0, 16));
+				opt.text = byteArray2HexString(lastsymkey["key"].slice(0, 16));
 				sendsel.appendChild(opt);
 			}
 			lastsymkey[senderid] = msg.result;
@@ -201,17 +207,17 @@ function recvNode(msg, senderid) {
 		default:
 			if (msg.method == "pss_subscription") {
 	 			var keytype = msg.params.result.Asymmetric ? "pubkey" : "symkey";
-	 			var key; 
+	 			var key;
 				if (keytype == "pubkey") {
 					key = msg.params.result.Key.substring(0, 18);
 				} else {
 					for (i = 0; i < symkey.length; i++) {
 						if (symkey[i][senderid] == msg.params.result.Key) {
-							key = toHexString(symkey[i]["key"].slice(0,8));
+							key = byteArray2HexString(symkey[i]["key"].slice(0,8));
 						}
 					}
 				}
-				addLog(senderid, keytype + ":" + key + " <<< " + msg.params.result.Msg);
+				addLog(senderid, keytype + ":" + key + " <<< " + msg.params.result.Msg + ": " + hexDecode(msg.params.result.Msg));
 			}
 	}
 
@@ -225,30 +231,30 @@ function recvNode(msg, senderid) {
 
 if ('WebSocket' in window) {
 
-	// "local" and "remote" are just names, they're both as local and remote as the other :)
-	conn["left"] = new WebSocket("ws://localhost:8546");
-	conn["right"] = new WebSocket("ws://localhost:8547");
+	// "left" and "remote" are just names, they're both as left and remote as the other :)
+	conn["left"] = new WebSocket("ws://localhost:8601");
+	conn["right"] = new WebSocket("ws://localhost:8602");
 
-	// local only does step 0 of the script
+	// left only does step 0 of the script
 	conn["left"].onopen = function() {
-		console.log("local ws open");
+		console.log("left ws open");
 	}
 
 	conn["right"].onopen = function() {
-		console.log("local ws open");
+		console.log("right ws open");
 	}
 
-	// local receives messages
+	// left receives messages
 	conn["left"].onmessage = function(m) {
 		msg = JSON.parse(m.data);
 		console.log("left msg: " + m.data);
-		recvNode(msg, "left");	
+		recvNode(msg, "left");
 	}
 
 	conn["right"].onmessage = function(m) {
 		msg = JSON.parse(m.data);
 		console.log("right msg: " + m.data);
-		recvNode(msg, "right");	
+		recvNode(msg, "right");
 	}
 
 	conn["left"].onerror = connerror;
@@ -269,21 +275,43 @@ function script(step) {
 }
 
 // cheekily borrowed from https://stackoverflow.com/questions/34309988/byte-array-to-hex-string-conversion-in-javascript
-function toHexString(byteArray) {
-  return Array.from(byteArray, function(byte) {
-    return ('0' + (byte & 0xFF).toString(16)).slice(-2);
-  }).join('');
+function byteArray2HexString(byteArray) {
+	return Array.from(byteArray, function(byte) {
+		return ('0' + (byte & 0xFF).toString(16)).slice(-2);
+	}).join('');
 }
 
 // equally cheekily borrowed from https://stackoverflow.com/questions/17720394/javascript-string-to-byte-to-string
-function string2Bin(str) {
-  var result = [];
-  for (var i = 0; i < str.length; i++) {
-    result.push(str.charCodeAt(i));
-  }
-  return result;
+function string2ByteArray(str) {
+	var result = [];
+	for (var i = 0; i < str.length; i++) {
+		result.push(str.charCodeAt(i));
+	}
+	return result;
 }
 
+function hexEncode(str) {
+	var hex, i;
+
+	var result = "0x";
+	for (i = 0; i < str.length; i++) {
+		hex = str.charCodeAt(i).toString(16);
+		result += ("000" + hex).slice(-4);
+	}
+
+	return result
+}
+
+function hexDecode(str) {
+	var j;
+	var hexes = str.substring(2).match(/.{1,4}/g) || [];
+	var back = "";
+	for(j = 0; j < hexes.length; j++) {
+		back += String.fromCharCode(parseInt(hexes[j], 16));
+	}
+
+	return back;
+}
 
 	</script>
 
@@ -299,9 +327,9 @@ function string2Bin(str) {
 	<div class="node" id="left">
 		<div class="info"><button id="pss_left_addr_get" onClick="getAddr('left');">Addr</button> <span id="pss_left_addr_val"></span></div>
 		<div class="info"><button id="pss_left_pubkey_get" onClick="getPubKey('left');">Pubkey:</button> <span id="pss_left_pubkey_val"></span></div>
-		<div class="info">Hint:
+		<div class="info">Address hint:
 			<select onChange="setHint('left', this.value);" id="pss_left_hint" disabled>
-				<option defaultselected>Set</option>
+				<option disabled selected value>Select</option>
 				<option>32</option>
 				<option>4</option>
 				<option>1</option>
@@ -309,25 +337,28 @@ function string2Bin(str) {
 			</select>
 			<span id="pss_left_hint_addr"></span>
 		</div>
-		<div class="action">
-			<input type="text" id="pss_left" /> <button onClick="sendMsg('left', document.getElementById('pss_left').value);" id="pss_left_send">Send</button>
-		</div>
+		<span>
+			<div class="action">
+				<input type="text" id="pss_left" /> <button onClick="sendMsg('left', document.getElementById('pss_left').value);" id="pss_left_send">Send</button>
+			</div>
+		</span>
+
 		<div class="action">
 			<button onClick="handshake('left');" id="pss_handshake">Handshake</button>
 		</div>
-		
+
 	</div>
 	<div class="node" id="right">
 		<div class="info"><button id="pss_right_addr_get" onClick="getAddr('right');">Addr</button> <span id="pss_right_addr_val"></span></div>
 		<div class="info"><button id="pss_right_pubkey_get" onClick="getPubKey('right');">Pubkey:</button> <span id="pss_right_pubkey_val"></span></div>
-		<div class="info">Hint:
+		<div class="info">Address hint:
 			<select onChange="setHint('right', this.value);" id="pss_right_hint" disabled>
-				<option defaultselected>Set</option>
+				<option disabled selected value>Select</option>
 				<option>32</option>
 				<option>4</option>
 				<option>1</option>
 				<option>0</option>
-			</select> 
+			</select>
 			<span id="pss_right_hint_addr"></span>
 		</div>
 		<div class="action">
